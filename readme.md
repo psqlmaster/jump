@@ -1,4 +1,4 @@
-🦘→📂 **jump** is a lightweight, zero-dependency Zsh module for managing directory aliases. It allows you to bookmark your current directory instantly, jump between projects, and keep your alias list clean and organized.
+🦘→📂 **jump** is a lightweight, zero-dependency module for managing directory aliases. It allows you to bookmark your current directory instantly, jump between projects, and keep your alias list clean and organized.
 
 #### Features
 
