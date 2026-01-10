@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+# v1.0.0
+# File: /usr/local/bin/jump
+# Source this file in .zshrc with: source /usr/local/bin/jump
+
+_J_ALIASES="$HOME/.zsh_aliases"
+
+# --- 1. Initialization ---
+if [ -f "$_J_ALIASES" ]; then
+    source "$_J_ALIASES"
+fi
+
+# --- 2. Internal Functions ---
+
+_j_search_action() {
+    local term="j$1"
+    local results=$(grep "^alias $term" "$_J_ALIASES" 2>/dev/null | sed "s/alias //" | sort)
+    
+    if [[ -n "$results" ]]; then
+        echo "Alias not found, but matches exist ($term*):"
+        echo "$results"
+    else
+        echo "Alias 'j$1' not found and no matches."
+    fi
+}
+
+_j_remove_action() {
+    local name=$1
+    sed -i "/^alias j$name=/d" "$_J_ALIASES"
+    unalias "j$name" 2>/dev/null
+    echo "Removed: j$name"
+}
+
+# --- 3. Main Function j ---
+j() {
+    local cmd="$1"
+    local arg="$2"
+
+    if [[ -z "$cmd" ]]; then
+        j list
+        return 0
+    fi
+
+    case "$cmd" in
+        # === Add (a) ===
+        a|add)
+            if [[ -z "$arg" ]]; then
+                _j_search_action "$cmd"
+                return 0
+            fi
+            
+            echo "alias j$arg='cd $(pwd)'" >> "$_J_ALIASES"
+            alias "j$arg"="cd $(pwd)"
+            echo "Added: j$arg -> $(pwd)"
+            ;;
+
+        # === Remove (r) ===
+        r|rm|d|del)
+            if [[ -z "$arg" ]]; then
+                _j_search_action "$cmd"
+                return 0
+            fi
+            
+            _j_remove_action "$arg"
+            ;;
+
+        # === Check and Clean (c) ===
+        c|check)
+            echo "1. Removing duplicate lines..."
+            if [ -f "$_J_ALIASES" ]; then
+                # sort -u: sorts and keeps only unique lines
+                # -o: overwrites the file with the result
+                sort -u "$_J_ALIASES" -o "$_J_ALIASES"
+                # Reload aliases to sync memory with file
+                source "$_J_ALIASES"
+            fi
+
+            echo "2. Checking directory existence..."
+            local found_invalid=0
+            
+            while read -r line; do
+                local tmp_name="${line#alias j}"
+                local name="${tmp_name%%=*}"
+                
+                local tmp_path="${line#*cd }"
+                local dir_path="${tmp_path%\'}"
+
+                if [[ ! -d "$dir_path" ]]; then
+                    echo "Path not found: $dir_path (removing j$name)"
+                    _j_remove_action "$name"
+                    found_invalid=1
+                fi
+            done < <(grep "^alias j" "$_J_ALIASES")
+            
+            [[ $found_invalid -eq 0 ]] && echo "No errors found. File cleaned."
+            ;;
+
+        # === List (l) ===
+        l|list)
+             echo "List of all jumps (j*):"
+             grep "^alias j" "$_J_ALIASES" 2>/dev/null | sed "s/alias //" | sort
+             ;;
+
+        # === Help (h) ===
+        h|help|-h|--help)
+            echo "\n jump: Quickly jump to a directory in the .zsh_aliases list"
+            echo -e " Copyright (c) 2026, Alexander Shcheglov @sqlmaster\n"
+            echo "  j<name>               - jump to directory"
+            echo "  j [a|add] <name>      - create alias for current directory"
+            echo "  j [r|rm|d|del] <name> - remove alias"
+            echo "  j [c|check]           - check: remove duplicates and broken links"
+            echo "  j [l]                 - list all"
+            echo "  j <text>              - search\n"
+            echo " example: 'cd'; 'j a h': Added: jh -> /home/user; 'jh' -> jump to /home/user"
+            ;;
+
+        # === Search (Default) ===
+        *)
+            _j_search_action "$cmd"
+            ;;
+    esac
+}
+
+# --- 4. Unknown command handler ---
+command_not_found_handler() {
+    local cmd="$1"
+
+    if [[ "$cmd" =~ ^j.+$ ]]; then
+        local suffix="${cmd:1}"
+        j "$suffix"
+        return 0
+    fi
+
+    echo "zsh: command not found: $cmd"
+    return 127
+}
