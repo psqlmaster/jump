@@ -50,7 +50,7 @@ The main command is `j`.
 
 ##### Basic Commands
 
-| Command | Description |
+| Command .     .| Description |
 | :--- | :--- |
 | **`j a <name>`** | **Add**: Bookmarks the current directory as `j<name>`. |
 | **`j r <name>`** | **Remove**: Deletes the alias `j<name>`. |
