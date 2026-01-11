@@ -6,7 +6,7 @@
 *   **Auto-Cleaning:** The `check` command removes duplicates and invalid paths (directories that no longer exist).
 *   **Smart Search:** Typing `j a` shows all aliases starting with `ja`.
 *   **Smart Fallback:** If you type `jar` and the alias doesn't exist, it automatically searches for aliases starting with `ar`.
-*   **Persistence:** Aliases are saved to `~/.zsh_aliases` and loaded automatically.
+*   **Persistence:** Aliases are saved to `~/.jump_aliases` and loaded automatically.
 
 #### Installation
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# v1.0.0
+# v1.0.1
 # File: /usr/local/bin/jump
 # Source this file in .zshrc with: source /usr/local/bin/jump
 
-_J_ALIASES="$HOME/.zsh_aliases"
+_J_ALIASES="$HOME/.jump_aliases"
 
 # --- 1. Initialization ---
 if [ -f "$_J_ALIASES" ]; then
@@ -103,7 +103,7 @@ j() {
 
         # === Help (h) ===
         h|help|-h|--help)
-            echo "\n jump: Quickly jump to a directory in the .zsh_aliases list"
+            echo "\n jump: Quickly jump to a directory in the .jump_aliases list v1.0.1"
             echo -e " Copyright (c) 2026, Alexander Shcheglov @sqlmaster\n"
             echo "  j<name>               - jump to directory"
             echo "  j [a|add] <name>      - create alias for current directory"
