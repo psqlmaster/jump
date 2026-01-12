@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-# v1.0.1
+# v1.2.0 Copyright (c) 2026, Alexander Shcheglov @sqlmaster
 # File: /usr/local/bin/jump
 # Source this file in .zshrc with: source /usr/local/bin/jump
 
 _J_ALIASES="$HOME/.jump_aliases"
+
+# Цвета для вывода
+CLR_G="\e[32m" # Green
+CLR_Y="\e[33m" # Yellow
+CLR_R="\e[31m" # Red
+CLR_B="\e[34m" # Blue
+CLR_0="\e[0m"  # Reset
 
 # --- 1. Initialization ---
 if [ -f "$_J_ALIASES" ]; then
@@ -17,10 +24,10 @@ _j_search_action() {
     local results=$(grep "^alias $term" "$_J_ALIASES" 2>/dev/null | sed "s/alias //" | sort)
     
     if [[ -n "$results" ]]; then
-        echo "Alias not found, but matches exist ($term*):"
+        echo -e "${CLR_Y}Matches found ($term*):${CLR_0}"
         echo "$results"
     else
-        echo "Alias 'j$1' not found and no matches."
+        echo -e "${CLR_R}Alias '$term' not found.${CLR_0}"
     fi
 }
 
@@ -28,7 +35,7 @@ _j_remove_action() {
     local name=$1
     sed -i "/^alias j$name=/d" "$_J_ALIASES"
     unalias "j$name" 2>/dev/null
-    echo "Removed: j$name"
+    echo -e "${CLR_R}Removed:${CLR_0} j$name"
 }
 
 # --- 3. Main Function j ---
@@ -42,95 +49,89 @@ j() {
     fi
 
     case "$cmd" in
+        # === Current Directory Alias (.) ===
+        .)
+            local curr_dir=$(pwd)
+            # Ищем строку, которая заканчивается на 'cd текущий_путь'
+            local match=$(grep "='cd $curr_dir'$" "$_J_ALIASES" 2>/dev/null)
+            
+            if [[ -n "$match" ]]; then
+                # Извлекаем имя алиаса (часть между 'alias ' и '=')
+                local alias_name=$(echo "$match" | sed -E 's/alias (j[^=]+)=.*/\1/')
+                echo -e "${CLR_G}Current dir alias:${CLR_0} ${CLR_B}$alias_name${CLR_0}"
+            else
+                echo -e "${CLR_Y}No alias found for the current directory${CLR_0}"
+            fi
+            ;;
+
         # === Add (a) ===
         a|add)
             if [[ -z "$arg" ]]; then
-                _j_search_action "$cmd"
-                return 0
+                echo -e "${CLR_R}Error: specify alias name${CLR_0}"
+                return 1
             fi
             
-            echo "alias j$arg='cd $(pwd)'" >> "$_J_ALIASES"
-            alias "j$arg"="cd $(pwd)"
-            echo "Added: j$arg -> $(pwd)"
+            local full_path=$(pwd)
+            echo "alias j$arg='cd $full_path'" >> "$_J_ALIASES"
+            alias "j$arg"="cd $full_path"
+            echo -e "${CLR_G}Added:${CLR_0} j$arg -> $full_path"
             ;;
 
         # === Remove (r) ===
         r|rm|d|del)
-            if [[ -z "$arg" ]]; then
-                _j_search_action "$cmd"
-                return 0
-            fi
-            
+            [[ -z "$arg" ]] && { echo "Usage: j r <name>"; return 1; }
             _j_remove_action "$arg"
             ;;
 
         # === Check and Clean (c) ===
         c|check)
-            echo "1. Removing duplicate lines..."
-            if [ -f "$_J_ALIASES" ]; then
-                # sort -u: sorts and keeps only unique lines
-                # -o: overwrites the file with the result
-                sort -u "$_J_ALIASES" -o "$_J_ALIASES"
-                # Reload aliases to sync memory with file
-                source "$_J_ALIASES"
-            fi
-
-            echo "2. Checking directory existence..."
-            local found_invalid=0
+            echo "Cleaning duplicates and broken links..."
+            [ -f "$_J_ALIASES" ] && sort -u "$_J_ALIASES" -o "$_J_ALIASES" && source "$_J_ALIASES"
             
             while read -r line; do
-                local tmp_name="${line#alias j}"
-                local name="${tmp_name%%=*}"
-                
-                local tmp_path="${line#*cd }"
-                local dir_path="${tmp_path%\'}"
-
-                if [[ ! -d "$dir_path" ]]; then
-                    echo "Path not found: $dir_path (removing j$name)"
+                local name=$(echo "$line" | sed -E 's/alias j([^=]+)=.*/\1/')
+                local path=$(echo "$line" | sed -E "s/.*='cd (.*)'/\1/")
+                if [[ ! -d "$path" ]]; then
+                    echo -e "${CLR_R}Path not found:${CLR_0} $path (removing j$name)"
                     _j_remove_action "$name"
-                    found_invalid=1
                 fi
             done < <(grep "^alias j" "$_J_ALIASES")
-            
-            [[ $found_invalid -eq 0 ]] && echo "No errors found. File cleaned."
             ;;
 
         # === List (l) ===
         l|list)
-             echo "List of all jumps (j*):"
+             echo -e "${CLR_B}List of all jumps:${CLR_0}"
              grep "^alias j" "$_J_ALIASES" 2>/dev/null | sed "s/alias //" | sort
              ;;
 
         # === Help (h) ===
         h|help|-h|--help)
-            echo "\n jump: Quickly jump to a directory in the .jump_aliases list v1.0.1"
-            echo -e " Copyright (c) 2026, Alexander Shcheglov @sqlmaster\n"
+         echo -e "\n${CLR_B}jump v1.2.0${CLR_0}  jump: Quickly jump to a directory in the .jump_aliases"
+         echo -e " Copyright (c) 2026, Alexander Shcheglov @sqlmaster\n"
             echo "  j<name>               - jump to directory"
             echo "  j [a|add] <name>      - create alias for current directory"
             echo "  j [r|rm|d|del] <name> - remove alias"
             echo "  j [c|check]           - check: remove duplicates and broken links"
             echo "  j [l]                 - list all"
-            echo "  j <text>              - search\n"
+            echo "  j <text>              - search"
+         echo -e "  j .                   - ${CLR_G}show alias for current dir${CLR_0}\n"
             echo " example: 'cd'; 'j a h': Added: jh -> /home/user; 'jh' -> jump to /home/user"
             ;;
-
-        # === Search (Default) ===
+            # === Search/Jump (Default) ===
         *)
             _j_search_action "$cmd"
             ;;
     esac
 }
 
-# --- 4. Unknown command handler ---
+# --- 4. Unknown command handler (ZSH) ---
 command_not_found_handler() {
     local cmd="$1"
-
     if [[ "$cmd" =~ ^j.+$ ]]; then
         local suffix="${cmd:1}"
-        j "$suffix"
+        j "$suffix" 2>/dev/null
         return 0
     fi
-
     echo "zsh: command not found: $cmd"
     return 127
 }
