@@ -50,14 +50,18 @@ The main command is `j`.
 
 ##### Basic Commands
 
-| Command .     .| Description |
+| Command | Description |
 | :--- | :--- |
-| **`j a <name>`** | **Add**: Bookmarks the current directory as `j<name>`. |
-| **`j r <name>`** | **Remove**: Deletes the alias `j<name>`. |
-| **`j l`** | **List**: Shows all saved `j` aliases. |
-| **`j c`** | **Check/Clean**: Removes duplicates, sorts the list, and deletes aliases pointing to non-existent folders. |
-| **`j h`** | **Help**: Displays the help menu. |
+| **`j<name>`** | **Jump**: Instantly switch to the directory associated with `j<name>`. |
+| **`j .`** | **Where am I?**: Shows the alias assigned to the current directory (if it exists). |
+| **`j a`** \| **`add <name>`** | **Add**: Bookmarks the current directory as `j<name>`. |
+| **`j r`** \| **`rm`** \| **`d`** \| **`del <name>`** | **Remove**: Deletes the alias `j<name>` from the list. |
+| **`j <text>`** | **Search**: Searches for aliases that match the specified text. |
+| **`j l`** \| **`list`** | **List**: Shows all saved `j` aliases in alphabetical order. |
+| **`j c`** \| **`check`** | **Clean**: Removes duplicates and deletes aliases pointing to non-existent folders. |
+| **`j h`** \| **`-h`** | **Help**: Displays the help menu and usage examples. |
 
+---
 ##### Navigation & Search
 
 1.  **Direct Jump:**
